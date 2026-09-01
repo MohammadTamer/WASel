@@ -2,6 +2,7 @@ package com.wasel.service;
 
 import com.wasel.dto.delivery.DeliveryDto;
 import com.wasel.dto.delivery.DeliveryRequestDto;
+import com.wasel.entity.Address;
 import com.wasel.entity.Delivery;
 import com.wasel.entity.Driver;
 import com.wasel.entity.Order;
