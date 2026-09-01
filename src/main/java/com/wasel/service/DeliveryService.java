@@ -302,7 +302,14 @@ public class DeliveryService {
             sb.append(address.getAddressLine());
         }
         if (address.getBuildingNumber() != null && !address.getBuildingNumber().isBlank()) {
-            sb.append(" (عمارة: ").append(address.getBuildingNumber()).append(")");
+            sb.append(" (عمارة: ").append(address.getBuildingNumber());
+            if (address.getFloor() != null && !address.getFloor().isBlank()) {
+                sb.append("، دور: ").append(address.getFloor());
+            }
+            if (address.getApartment() != null && !address.getApartment().isBlank()) {
+                sb.append("، شقة: ").append(address.getApartment());
+            }
+            sb.append(")");
         }
         return sb.toString();
     }
