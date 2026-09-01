@@ -1,0 +1,15 @@
+package com.wasel.enums;
+
+public enum NotificationType {
+    ORDER_CREATED,
+    ORDER_ACCEPTED,
+    ORDER_REJECTED,
+    ORDER_PREPARING,
+    ORDER_READY,
+    DRIVER_ASSIGNED,
+    ORDER_PICKED_UP,
+    ORDER_ON_THE_WAY,
+    ORDER_DELIVERED,
+    ORDER_CANCELLED,
+    REVIEW_RECEIVED
+}
