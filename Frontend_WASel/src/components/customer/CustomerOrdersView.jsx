@@ -53,7 +53,7 @@ export default function CustomerOrdersView() {
     order.items.forEach(item => {
       addToCart(
         { id: item.productId, name: item.productName, price: item.price },
-        { id: order.storeId, name: order.storeName, deliveryFee: order.deliveryFee || 15 }
+        { id: order.storeId, name: order.storeName, deliveryFee: order.deliveryFee != null ? order.deliveryFee : 0 }
       );
     });
     setIsDrawerOpen(true);

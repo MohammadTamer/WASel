@@ -22,6 +22,7 @@ public class DeliveryDto {
     private String storeName;
     private String storeAddress;
     private String customerAddress;
+    private java.math.BigDecimal deliveryFee;
     private LocalDateTime assignedAt;
     private LocalDateTime pickedUpAt;
     private LocalDateTime deliveredAt;

@@ -352,7 +352,7 @@ export default function DriverPortal({ activeTab = 'driver-available', setActive
                     </span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <span style={{ fontWeight: 800, color: 'var(--primary-dark)' }}>+{del.deliveryFee || 15} {t('currency')}</span>
+                    <span style={{ fontWeight: 800, color: 'var(--primary-dark)' }}>+{del.deliveryFee != null ? del.deliveryFee : 0} {t('currency')}</span>
                     <Badge status={del.status || del.orderStatus} />
                   </div>
                 </div>
