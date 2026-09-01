@@ -267,7 +267,7 @@ public class DeliveryService {
                 .status(delivery.getStatus().name())
                 .storeName(order.getStore().getName())
                 .storeAddress(order.getStore().getAddress())
-                .customerAddress(order.getDeliveryAddress() != null ? order.getDeliveryAddress().getAddressLine() : "")
+                .customerAddress(order.getAddress() != null ? formatAddress(order.getAddress()) : "")
                 .deliveryFee(order.getDeliveryFee())
                 .assignedAt(delivery.getAssignedAt())
                 .pickedUpAt(delivery.getPickedUpAt())
@@ -285,9 +285,25 @@ public class DeliveryService {
                 .orderNumber(order.getOrderNumber())
                 .storeName(order.getStore().getName())
                 .storeAddress(order.getStore().getAddress())
-                .customerArea(order.getAddress().getCity())
+                .customerArea(order.getAddress() != null ? order.getAddress().getCity() : "")
                 .deliveryFee(order.getDeliveryFee())
                 .itemCount(order.getOrderItems().size())
                 .build();
+    }
+
+    private String formatAddress(Address address) {
+        if (address == null) return "";
+        StringBuilder sb = new StringBuilder();
+        if (address.getCity() != null && !address.getCity().isBlank()) {
+            sb.append(address.getCity());
+        }
+        if (address.getAddressLine() != null && !address.getAddressLine().isBlank()) {
+            if (sb.length() > 0) sb.append(" - ");
+            sb.append(address.getAddressLine());
+        }
+        if (address.getBuildingNumber() != null && !address.getBuildingNumber().isBlank()) {
+            sb.append(" (عمارة: ").append(address.getBuildingNumber()).append(")");
+        }
+        return sb.toString();
     }
 }
