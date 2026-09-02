@@ -16,6 +16,7 @@ export default function AuthModal({ isOpen, onClose }) {
     email: '',
     phone: '',
     password: '',
+    confirmPassword: '',
     role: 'CUSTOMER',
   });
 
@@ -27,6 +28,7 @@ export default function AuthModal({ isOpen, onClose }) {
         email: '',
         phone: '',
         password: '',
+        confirmPassword: '',
         role: 'CUSTOMER',
       });
       setLoading(false);
@@ -39,6 +41,17 @@ export default function AuthModal({ isOpen, onClose }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (mode === 'register') {
+      if (formData.password !== formData.confirmPassword) {
+        showToast(t('passwordsDoNotMatch'), 'error');
+        return;
+      }
+      if (formData.password.length < 6) {
+        showToast(t('passwordTooShort'), 'error');
+        return;
+      }
+    }
+
     setLoading(true);
     try {
       if (mode === 'login') {
@@ -47,7 +60,8 @@ export default function AuthModal({ isOpen, onClose }) {
         onClose();
       } else {
         const emailToKeep = formData.email;
-        await register(formData);
+        const { confirmPassword, ...registerPayload } = formData;
+        await register(registerPayload);
         showToast(t('accountCreatedSuccess'), 'success');
         // Switch to login tab and pre-fill email
         setMode('login');
@@ -56,6 +70,7 @@ export default function AuthModal({ isOpen, onClose }) {
           email: emailToKeep,
           phone: '',
           password: '',
+          confirmPassword: '',
           role: 'CUSTOMER',
         });
       }
@@ -120,6 +135,7 @@ export default function AuthModal({ isOpen, onClose }) {
               >
                 <option value="CUSTOMER">{t('roleCustomer')}</option>
                 <option value="STORE_OWNER">{t('roleStoreOwner')}</option>
+                <option value="STORE_EMPLOYEE">{t('roleStoreEmployee')}</option>
                 <option value="DRIVER">{t('roleDriver')}</option>
               </select>
             </div>
@@ -167,6 +183,22 @@ export default function AuthModal({ isOpen, onClose }) {
             autoComplete="new-password"
           />
         </div>
+
+        {mode === 'register' && (
+          <div className="form-group">
+            <label className="form-label">{t('confirmPassword')}</label>
+            <input
+              type="password"
+              name="confirmPassword"
+              className="form-input"
+              placeholder="••••••••"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              required
+              autoComplete="new-password"
+            />
+          </div>
+        )}
 
         <button
           type="submit"

@@ -4,6 +4,7 @@ import com.wasel.dto.store.CreateStoreRequest;
 import com.wasel.dto.store.StoreDto;
 import com.wasel.dto.store.UpdateStoreRequest;
 import com.wasel.entity.Store;
+import com.wasel.entity.StoreEmployee;
 import com.wasel.entity.User;
 import com.wasel.enums.StoreStatus;
 import com.wasel.enums.UserRole;
@@ -76,7 +77,9 @@ public class StoreService {
         User user = userService.getUserByEmail(email);
         Store store = findStoreById(storeId);
 
-        validateStoreAccess(user, store);
+        if (user.getRole() != UserRole.ADMIN && !store.getOwner().getId().equals(user.getId())) {
+            throw new ForbiddenException("Only the store owner or admin can update store settings");
+        }
 
         if (request.getName() != null) store.setName(request.getName());
         if (request.getDescription() != null) store.setDescription(request.getDescription());
@@ -109,6 +112,13 @@ public class StoreService {
 
     public List<StoreDto> getMyStores(String email) {
         User user = userService.getUserByEmail(email);
+        if (user.getRole() == UserRole.STORE_EMPLOYEE) {
+            List<StoreEmployee> assignments = storeEmployeeRepository.findByUserId(user.getId());
+            return assignments.stream()
+                    .map(StoreEmployee::getStore)
+                    .map(this::mapToDto)
+                    .collect(Collectors.toList());
+        }
         return storeRepository.findByOwnerId(user.getId()).stream()
                 .map(this::mapToDto)
                 .collect(Collectors.toList());

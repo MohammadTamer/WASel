@@ -8,7 +8,7 @@ const ORDER_STEPS = [
   { key: 'READY', labelKey: 'stepReady', icon: '4' },
   { key: 'ASSIGNED', labelKey: 'stepAssigned', icon: '5' },
   { key: 'PICKED_UP', labelKey: 'stepPickedUp', icon: '6' },
-  { key: 'ON_THE_WAY', labelKey: 'stepOnTheWay', icon: '7' },
+  { key: 'ON_THE_WAY', labelKey: 'stepOnWay', icon: '7' },
   { key: 'DELIVERED', labelKey: 'stepDelivered', icon: '8' },
 ];
 
@@ -34,6 +34,7 @@ export default function StatusTracker({ status }) {
   const currentIndex = ORDER_STEPS.findIndex(s => s.key === status);
   const activeIndex = currentIndex === -1 ? 0 : currentIndex;
   const progressPercent = (activeIndex / (ORDER_STEPS.length - 1)) * 100;
+  const isDelivered = status === 'DELIVERED';
 
   return (
     <div className="status-tracker">
@@ -41,8 +42,8 @@ export default function StatusTracker({ status }) {
         <div className="tracker-bar-progress" style={{ width: `${progressPercent}%` }}></div>
       </div>
       {ORDER_STEPS.map((step, idx) => {
-        const isCompleted = idx < activeIndex;
-        const isCurrent = idx === activeIndex;
+        const isCompleted = isDelivered ? idx <= activeIndex : idx < activeIndex;
+        const isCurrent = !isDelivered && idx === activeIndex;
         return (
           <div key={step.key} className={`tracker-step ${isCompleted ? 'completed' : ''} ${isCurrent ? 'current' : ''}`}>
             <div className="tracker-circle">

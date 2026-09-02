@@ -5,10 +5,11 @@ import { useNotifications } from '../../context/NotificationContext';
 import { useAuth } from '../../context/AuthContext';
 import Badge from '../common/Badge';
 import Modal from '../common/Modal';
+import TeamManagementTab from './TeamManagementTab';
 
 export default function StoreOwnerPortal({ activeTab = 'store-orders', setActiveTab }) {
   const { showToast } = useNotifications();
-  const { t } = useAuth();
+  const { t, user } = useAuth();
   const [stores, setStores] = useState([]);
   const [activeStore, setActiveStore] = useState(null);
   const [orders, setOrders] = useState([]);
@@ -17,17 +18,23 @@ export default function StoreOwnerPortal({ activeTab = 'store-orders', setActive
   const [loading, setLoading] = useState(true);
   const [orderFilter, setOrderFilter] = useState('NEW'); // 'NEW' | 'PREPARING' | 'READY' | 'DONE'
 
+  const isEmployee = user?.role === 'STORE_EMPLOYEE';
+  const isOwner = user?.role === 'STORE_OWNER' || user?.role === 'ADMIN';
+
   // Determine current tab from props or fallback
   const currentTab = (activeTab === 'store-orders' || activeTab === 'orders') 
     ? 'orders' 
     : (activeTab === 'store-menu' || activeTab === 'menu') 
       ? 'menu' 
-      : 'settings';
+      : (activeTab === 'store-team' || activeTab === 'team')
+        ? (isOwner ? 'team' : 'orders')
+        : (isOwner ? 'settings' : 'orders');
 
   const switchTab = (tabKey) => {
     if (setActiveTab) {
       if (tabKey === 'orders') setActiveTab('store-orders');
       else if (tabKey === 'menu') setActiveTab('store-menu');
+      else if (tabKey === 'team') setActiveTab('store-team');
       else setActiveTab('store-info');
     }
   };
@@ -294,6 +301,31 @@ export default function StoreOwnerPortal({ activeTab = 'store-orders', setActive
 
   return (
     <div>
+      {/* Employee Operational Banner */}
+      {isEmployee && (
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(16, 185, 129, 0.12))',
+          border: '1px solid rgba(59, 130, 246, 0.3)',
+          borderRadius: 'var(--radius-lg)',
+          padding: '0.85rem 1.25rem',
+          marginBottom: '1.25rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.75rem',
+          fontSize: '0.95rem',
+          color: 'var(--text-main)',
+          boxShadow: 'var(--shadow-sm)'
+        }}>
+          <span style={{ fontSize: '1.4rem' }}>👨‍🍳</span>
+          <div>
+            <strong>{t('employeeModeActive')}</strong>
+            <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+              {t('employeeModeBannerDesc')}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Top Store Header / Switcher */}
       <div className="card" style={{ marginBottom: '1.5rem', padding: '1.25rem 1.5rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
@@ -318,16 +350,18 @@ export default function StoreOwnerPortal({ activeTab = 'store-orders', setActive
                   {activeStore && <Badge status={activeStore.status} />}
                 </div>
               ) : (
-                <h3 style={{ fontSize: '1.2rem', fontWeight: 800 }}>{t('storeOwnerDashboard')}</h3>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 800 }}>
+                  {isEmployee ? t('assignedStoreTitle') : t('storeOwnerDashboard')}
+                </h3>
               )}
               <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                {activeStore ? `📍 ${activeStore.address || 'Address'} • ${t('deliveryFee')}: ${activeStore.deliveryFee} ${t('currency')}` : t('noStoreRegistered')}
+                {activeStore ? `📍 ${activeStore.address || 'Address'} • ${t('deliveryFee')}: ${activeStore.deliveryFee} ${t('currency')}` : (isEmployee ? t('notAssignedToStoreYet') : t('noStoreRegistered'))}
               </span>
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '0.75rem' }}>
-            {activeStore && (
+          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+            {activeStore && isOwner && (
               <button
                 className={`btn ${activeStore.status === 'OPEN' ? 'btn-outline' : 'btn-primary'} btn-sm`}
                 onClick={handleToggleStoreStatus}
@@ -335,31 +369,39 @@ export default function StoreOwnerPortal({ activeTab = 'store-orders', setActive
                 {activeStore.status === 'OPEN' ? t('closeStoreBtn') : t('openStoreBtn')}
               </button>
             )}
-            <button
-              className="btn btn-primary btn-sm"
-              onClick={openNewStore}
-            >
-              {t('createNewStoreBtn')}
-            </button>
+            {isOwner && (
+              <button
+                className="btn btn-primary btn-sm"
+                onClick={openNewStore}
+              >
+                {t('createNewStoreBtn')}
+              </button>
+            )}
           </div>
         </div>
       </div>
 
       {stores.length === 0 ? (
         <div className="card" style={{ textAlign: 'center', padding: '4rem 1.5rem' }}>
-          <div style={{ fontSize: '3.5rem', marginBottom: '1rem' }}>🏬</div>
-          <h3 style={{ fontSize: '1.3rem', fontWeight: 800, marginBottom: '0.5rem' }}>{t('noStoreRegistered')}</h3>
+          <div style={{ fontSize: '3.5rem', marginBottom: '1rem' }}>{isEmployee ? '👨‍🍳' : '🏬'}</div>
+          <h3 style={{ fontSize: '1.3rem', fontWeight: 800, marginBottom: '0.5rem' }}>
+            {isEmployee ? t('noStoreAssignedTitle') : t('noStoreRegistered')}
+          </h3>
           <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', maxWidth: '460px', margin: '0 auto 1.5rem' }}>
-            {t('noStoreRegisteredHint')}
+            {isEmployee 
+              ? t('noStoreAssignedHint')
+              : t('noStoreRegisteredHint')}
           </p>
-          <button className="btn btn-primary btn-lg" onClick={openNewStore}>
-            {t('createFirstStoreBtn')}
-          </button>
+          {isOwner && (
+            <button className="btn btn-primary btn-lg" onClick={openNewStore}>
+              {t('createFirstStoreBtn')}
+            </button>
+          )}
         </div>
       ) : (
         <>
           {/* Tabs Navigation */}
-          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
             <button
               className={`btn ${currentTab === 'orders' ? 'btn-primary' : 'btn-outline'}`}
               onClick={() => switchTab('orders')}
@@ -372,12 +414,22 @@ export default function StoreOwnerPortal({ activeTab = 'store-orders', setActive
             >
               {t('menuTab')} ({products.length})
             </button>
-            <button
-              className={`btn ${currentTab === 'settings' ? 'btn-primary' : 'btn-outline'}`}
-              onClick={() => switchTab('settings')}
-            >
-              ⚙️ {t('navStoreSettings')}
-            </button>
+            {isOwner && (
+              <>
+                <button
+                  className={`btn ${currentTab === 'team' ? 'btn-primary' : 'btn-outline'}`}
+                  onClick={() => switchTab('team')}
+                >
+                  {t('navStoreEmployees')}
+                </button>
+                <button
+                  className={`btn ${currentTab === 'settings' ? 'btn-primary' : 'btn-outline'}`}
+                  onClick={() => switchTab('settings')}
+                >
+                  ⚙️ {t('navStoreSettings')}
+                </button>
+              </>
+            )}
           </div>
 
           {/* TAB 1: Orders Board */}
@@ -497,21 +549,34 @@ export default function StoreOwnerPortal({ activeTab = 'store-orders', setActive
           {/* TAB 2: Menu & Products */}
           {currentTab === 'menu' && (
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button
-                    className="btn btn-primary btn-sm"
-                    onClick={openNewProduct}
-                  >
-                    {t('addProductBtn')}
-                  </button>
-                  <button
-                    className="btn btn-outline btn-sm"
-                    onClick={openNewCategory}
-                  >
-                    {t('addCategoryBtn')}
-                  </button>
-                </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+                {isOwner ? (
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button
+                      className="btn btn-primary btn-sm"
+                      onClick={openNewProduct}
+                    >
+                      {t('addProductBtn')}
+                    </button>
+                    <button
+                      className="btn btn-outline btn-sm"
+                      onClick={openNewCategory}
+                    >
+                      {t('addCategoryBtn')}
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{
+                    background: 'var(--bg-hover)',
+                    padding: '0.5rem 0.85rem',
+                    borderRadius: 'var(--radius-md)',
+                    border: '1px solid var(--border-color)',
+                    fontSize: '0.85rem',
+                    color: 'var(--text-muted)'
+                  }}>
+                    💡 {t('onlyOwnerCanAddProducts')} {t('employeeStockControlHint')}
+                  </div>
+                )}
 
                 <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
                   {t('totalProducts')}: {products.length} | {t('totalCategories')}: {categories.length}
@@ -523,9 +588,11 @@ export default function StoreOwnerPortal({ activeTab = 'store-orders', setActive
                   <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>🍔</div>
                   <h4>{t('emptyMenu')}</h4>
                   <p style={{ color: 'var(--text-muted)', marginBottom: '1rem' }}>{t('emptyMenuHint')}</p>
-                  <button className="btn btn-primary btn-sm" onClick={openNewProduct}>
-                    {t('addFirstProduct')}
-                  </button>
+                  {isOwner && (
+                    <button className="btn btn-primary btn-sm" onClick={openNewProduct}>
+                      {t('addFirstProduct')}
+                    </button>
+                  )}
                 </div>
               ) : (
                 <div className="grid-products">
@@ -558,38 +625,41 @@ export default function StoreOwnerPortal({ activeTab = 'store-orders', setActive
                           className={`btn ${prod.isAvailable ? 'btn-outline' : 'btn-primary'} btn-sm`}
                           style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem' }}
                           onClick={() => handleToggleProduct(prod.id)}
+                          title={t('toggleStockTooltip')}
                         >
                           {prod.isAvailable ? `🟢 ${t('available')}` : `🔴 ${t('notAvailable')}`}
                         </button>
 
-                        <div style={{ display: 'flex', gap: '0.3rem' }}>
-                          <button
-                            className="btn-icon btn-sm"
-                            style={{ width: 28, height: 28 }}
-                            title={t('edit')}
-                            onClick={() => {
-                              setEditingProduct(prod);
-                              setProductForm({
-                                name: prod.name,
-                                description: prod.description || '',
-                                price: prod.price,
-                                categoryId: prod.categoryId || '',
-                                isAvailable: prod.isAvailable,
-                              });
-                              setIsProductModal(true);
-                            }}
-                          >
-                            ✏️
-                          </button>
-                          <button
-                            className="btn-icon btn-sm"
-                            style={{ width: 28, height: 28, color: 'var(--accent-rose)' }}
-                            title={t('delete')}
-                            onClick={() => handleDeleteProduct(prod.id)}
-                          >
-                            🗑️
-                          </button>
-                        </div>
+                        {isOwner && (
+                          <div style={{ display: 'flex', gap: '0.3rem' }}>
+                            <button
+                              className="btn-icon btn-sm"
+                              style={{ width: 28, height: 28 }}
+                              title={t('edit')}
+                              onClick={() => {
+                                setEditingProduct(prod);
+                                setProductForm({
+                                  name: prod.name,
+                                  description: prod.description || '',
+                                  price: prod.price,
+                                  categoryId: prod.categoryId || '',
+                                  isAvailable: prod.isAvailable,
+                                });
+                                setIsProductModal(true);
+                              }}
+                            >
+                              ✏️
+                            </button>
+                            <button
+                              className="btn-icon btn-sm"
+                              style={{ width: 28, height: 28, color: 'var(--accent-rose)' }}
+                              title={t('delete')}
+                              onClick={() => handleDeleteProduct(prod.id)}
+                            >
+                              🗑️
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -598,8 +668,13 @@ export default function StoreOwnerPortal({ activeTab = 'store-orders', setActive
             </div>
           )}
 
-          {/* TAB 3: Store Settings & Profile */}
-          {currentTab === 'settings' && activeStore && (
+          {/* TAB 3: Team Staff Management */}
+          {currentTab === 'team' && isOwner && activeStore && (
+            <TeamManagementTab storeId={activeStore.id} storeName={activeStore.name} />
+          )}
+
+          {/* TAB 4: Store Settings & Profile */}
+          {currentTab === 'settings' && isOwner && activeStore && (
             <div className="card" style={{ padding: '2rem', maxWidth: '720px', margin: '0 auto' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '1rem' }}>
                 <div>

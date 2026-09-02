@@ -35,7 +35,7 @@ function MainApp() {
 
   // Sync tab when user role changes
   React.useEffect(() => {
-    if (user?.role === 'STORE_OWNER') {
+    if (user?.role === 'STORE_OWNER' || user?.role === 'STORE_EMPLOYEE') {
       setActiveTab('store-orders');
     } else if (user?.role === 'DRIVER') {
       setActiveTab('driver-available');
@@ -73,8 +73,8 @@ function MainApp() {
 
       {/* Main Workspace / View Content */}
       <main className="main-content">
-        {/* 1. STORE OWNER PORTAL */}
-        {user?.role === 'STORE_OWNER' && (
+        {/* 1. STORE OWNER & EMPLOYEE PORTAL */}
+        {(user?.role === 'STORE_OWNER' || user?.role === 'STORE_EMPLOYEE') && (
           <StoreOwnerPortal activeTab={activeTab} setActiveTab={setActiveTab} />
         )}
 

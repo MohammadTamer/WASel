@@ -7,7 +7,9 @@ import com.wasel.entity.Category;
 import com.wasel.entity.Product;
 import com.wasel.entity.Store;
 import com.wasel.entity.User;
+import com.wasel.enums.UserRole;
 import com.wasel.exception.BadRequestException;
+import com.wasel.exception.ForbiddenException;
 import com.wasel.exception.ResourceNotFoundException;
 import com.wasel.repository.CategoryRepository;
 import com.wasel.repository.ProductRepository;
@@ -56,7 +58,7 @@ public class ProductService {
     public ProductDto createProduct(String email, Long storeId, CreateProductRequest request) {
         User user = userService.getUserByEmail(email);
         Store store = storeService.findStoreById(storeId);
-        storeService.validateStoreAccess(user, store);
+        validateOwnerOnlyAccess(user, store);
 
         Category category = null;
         if (request.getCategoryId() != null) {
@@ -85,7 +87,7 @@ public class ProductService {
     public ProductDto updateProduct(String email, Long storeId, Long productId, UpdateProductRequest request) {
         User user = userService.getUserByEmail(email);
         Store store = storeService.findStoreById(storeId);
-        storeService.validateStoreAccess(user, store);
+        validateOwnerOnlyAccess(user, store);
 
         Product product = findProductById(productId);
         if (!product.getStore().getId().equals(storeId)) {
@@ -130,7 +132,7 @@ public class ProductService {
     public void deleteProduct(String email, Long storeId, Long productId) {
         User user = userService.getUserByEmail(email);
         Store store = storeService.findStoreById(storeId);
-        storeService.validateStoreAccess(user, store);
+        validateOwnerOnlyAccess(user, store);
 
         Product product = findProductById(productId);
         if (!product.getStore().getId().equals(storeId)) {
@@ -138,6 +140,13 @@ public class ProductService {
         }
 
         productRepository.delete(product);
+    }
+
+    private void validateOwnerOnlyAccess(User user, Store store) {
+        if (user.getRole() == UserRole.ADMIN) return;
+        if (store.getOwner().getId().equals(user.getId())) return;
+
+        throw new ForbiddenException("Only the store owner or admin can manage products catalog");
     }
 
     public ProductDto mapToDto(Product product) {

@@ -5,7 +5,9 @@ import com.wasel.dto.category.CreateCategoryRequest;
 import com.wasel.entity.Category;
 import com.wasel.entity.Store;
 import com.wasel.entity.User;
+import com.wasel.enums.UserRole;
 import com.wasel.exception.DuplicateResourceException;
+import com.wasel.exception.ForbiddenException;
 import com.wasel.exception.ResourceNotFoundException;
 import com.wasel.repository.CategoryRepository;
 import lombok.RequiredArgsConstructor;
@@ -33,7 +35,7 @@ public class CategoryService {
     public CategoryDto createCategory(String email, Long storeId, CreateCategoryRequest request) {
         User user = userService.getUserByEmail(email);
         Store store = storeService.findStoreById(storeId);
-        storeService.validateStoreAccess(user, store);
+        validateOwnerOnlyAccess(user, store);
 
         if (categoryRepository.existsByStoreIdAndName(storeId, request.getName())) {
             throw new DuplicateResourceException("Category '" + request.getName() + "' already exists in this store");
@@ -52,7 +54,7 @@ public class CategoryService {
     public CategoryDto updateCategory(String email, Long storeId, Long categoryId, CreateCategoryRequest request) {
         User user = userService.getUserByEmail(email);
         Store store = storeService.findStoreById(storeId);
-        storeService.validateStoreAccess(user, store);
+        validateOwnerOnlyAccess(user, store);
 
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
@@ -75,7 +77,7 @@ public class CategoryService {
     public void deleteCategory(String email, Long storeId, Long categoryId) {
         User user = userService.getUserByEmail(email);
         Store store = storeService.findStoreById(storeId);
-        storeService.validateStoreAccess(user, store);
+        validateOwnerOnlyAccess(user, store);
 
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
@@ -85,6 +87,13 @@ public class CategoryService {
         }
 
         categoryRepository.delete(category);
+    }
+
+    private void validateOwnerOnlyAccess(User user, Store store) {
+        if (user.getRole() == UserRole.ADMIN) return;
+        if (store.getOwner().getId().equals(user.getId())) return;
+
+        throw new ForbiddenException("Only the store owner or admin can manage store categories");
     }
 
     public CategoryDto mapToDto(Category category) {

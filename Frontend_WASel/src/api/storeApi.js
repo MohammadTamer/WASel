@@ -21,4 +21,10 @@ export const storeApi = {
   updateProduct: (storeId, id, data) => api.put(`/api/stores/${storeId}/products/${id}`, data),
   toggleAvailability: (storeId, id) => api.patch(`/api/stores/${storeId}/products/${id}/availability`),
   deleteProduct: (storeId, id) => api.delete(`/api/stores/${storeId}/products/${id}`),
+
+  // Employees & Team Management
+  getStoreEmployees: (storeId) => api.get(`/api/stores/${storeId}/employees`),
+  addStoreEmployee: (storeId, email) => api.post(`/api/stores/${storeId}/employees`, { email }),
+  removeStoreEmployee: (storeId, userId) => api.delete(`/api/stores/${storeId}/employees/${userId}`),
 };
+
